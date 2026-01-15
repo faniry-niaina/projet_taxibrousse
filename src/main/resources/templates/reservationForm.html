@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Réserver un voyage</title>
+    <link th:href="@{/bootstrap/css/bootstrap.min.css}" rel="stylesheet">
+    
+</head>
+<body>
+<div class="container py-4">
+
+    <h1 class="mb-4">Réservation du voyage</h1>
+
+    <!-- Messages -->
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="card p-3 mb-4">
+        <h5 class="card-title" th:text="${voyage.trajet.depart.nom} + ' → ' + ${voyage.trajet.arrive.nom}"></h5>
+        <p>Date : <span th:text="${#temporals.format(voyage.dateHeure, 'dd/MM/yyyy')}"></span></p>
+        <p>Durée : <span th:text="${voyage.dureVoyage}"></span> h</p>
+        <p>Prix : <span th:text="${voyage.prix}"></span> Ar</p>
+        <div class="row">
+            <div class="col-md-6">
+                <p>Places Standard disponibles : 
+                    <span th:text="${voyage.placesStandardRestantes}" th:class="${voyage.placesStandardRestantes > 0 ? 'badge bg-success' : 'badge bg-danger'}"></span>
+                </p>
+            </div>
+            <div class="col-md-6">
+                <p>Places VIP disponibles : 
+                    <span th:text="${voyage.placesVipRestantes}" th:class="${voyage.placesVipRestantes > 0 ? 'badge bg-success' : 'badge bg-danger'}"></span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <form th:action="@{/reservation/{id}(id=${voyage.id})}" method="post" class="row g-3">
+        <div class="col-md-6">
+            <label for="nomClient" class="form-label">Votre nom</label>
+            <input type="text" id="nomClient" name="nomClient" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+            <label for="nbPlaces" class="form-label">Nombre de places</label>
+            <input type="number" id="nbPlaces" name="nbPlaces" class="form-control" min="1" th:attr="max=${voyage.placesRestantes}" required>
+        </div>
+        <div class="col-md-6">
+            <label for="typePlaceId" class="form-label">Type de place</label>
+            <select id="typePlaceId" name="typePlaceId" class="form-select" required>
+                <option value="">-- Sélectionner --</option>
+                <option th:each="tp : ${typePlaces}" th:value="${tp.id}" th:text="${tp.libelle}"></option>
+            </select>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Confirmer la réservation</button>
+            <a th:href="@{/}" class="btn btn-secondary">Annuler</a>
+        </div>
+    </form>
+
+</div>
+</body>
+</html>

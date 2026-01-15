@@ -1,0 +1,13 @@
+package com.taxibrousse;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class TaxibrousseApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(TaxibrousseApplication.class, args);
+	}
+
+}
