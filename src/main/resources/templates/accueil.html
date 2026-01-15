@@ -49,7 +49,7 @@
             <th>Trajet</th>
             <th>Date</th>
             <th>Durée (h)</th>
-            <th>Prix (Ar)</th>
+            
             <th>Places Standard</th>
             <th>Places VIP</th>
             <th>Total Restant</th>
@@ -64,7 +64,6 @@
             <td th:text="${voyage.trajet.depart.nom} + ' → ' + ${voyage.trajet.arrive.nom}"></td>
             <td th:text="${#temporals.format(voyage.dateHeure, 'dd/MM/yyyy')}"></td>
             <td th:text="${voyage.dureVoyage}"></td>
-            <td th:text="${voyage.prix}"></td>
             <td>
                 <span th:text="${voyage.placesStandardRestantes}" th:class="${voyage.placesStandardRestantes > 0 ? 'text-success' : 'text-danger'}"></span>
             </td>

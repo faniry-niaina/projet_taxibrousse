@@ -20,15 +20,33 @@
         <p>Date : <span th:text="${#temporals.format(voyage.dateHeure, 'dd/MM/yyyy')}"></span></p>
         <p>Durée : <span th:text="${voyage.dureVoyage}"></span> h</p>
         <p>Prix : <span th:text="${voyage.prix}"></span> Ar</p>
+        <hr>
+        <h6>Informations sur la voiture</h6>
+        <p>Matricule : <span class="fw-bold" th:text="${voyage.voiture.matricule}"></span></p>
+        <p>Capacité totale : <span class="badge bg-secondary" th:text="${voyage.voiture.capacite}"></span> places</p>
+        <div class="row">
+            <div class="col-md-6">
+                <p>Capacité Standard : <span class="badge bg-info" th:text="${voyage.placesStandardTotal}"></span> places</p>
+                <p>Prix unitaire Standard : <span class="fw-bold text-primary" th:text="${voyage.prixStandard}"></span> Ar</p>
+            </div>
+            <div class="col-md-6">
+                <p>Capacité VIP : <span class="badge bg-warning text-dark" th:text="${voyage.placesVipTotal}"></span> places</p>
+                <p>Prix unitaire VIP : <span class="fw-bold text-warning" th:text="${voyage.prixVip}"></span> Ar</p>
+            </div>
+        </div>
+        <hr>
+        <h6>Places disponibles</h6>
         <div class="row">
             <div class="col-md-6">
                 <p>Places Standard disponibles : 
                     <span th:text="${voyage.placesStandardRestantes}" th:class="${voyage.placesStandardRestantes > 0 ? 'badge bg-success' : 'badge bg-danger'}"></span>
+                    / <span th:text="${voyage.placesStandardTotal}"></span>
                 </p>
             </div>
             <div class="col-md-6">
                 <p>Places VIP disponibles : 
                     <span th:text="${voyage.placesVipRestantes}" th:class="${voyage.placesVipRestantes > 0 ? 'badge bg-success' : 'badge bg-danger'}"></span>
+                    / <span th:text="${voyage.placesVipTotal}"></span>
                 </p>
             </div>
         </div>

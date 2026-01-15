@@ -61,6 +61,44 @@ public class Voyage {
         return voiture.getCapacite() - placesReservees;
     }
 
+    // Capacité totale Standard de la voiture
+    public int getPlacesStandardTotal() {
+        if (voiture == null || voiture.getPlaceVoitures() == null) return 0;
+        return voiture.getPlaceVoitures().stream()
+                .filter(pv -> pv.getTypePlace() != null && pv.getTypePlace().getId() == 1)
+                .mapToInt(PlaceVoiture::getNombrePlace)
+                .sum();
+    }
+
+    // Capacité totale VIP de la voiture
+    public int getPlacesVipTotal() {
+        if (voiture == null || voiture.getPlaceVoitures() == null) return 0;
+        return voiture.getPlaceVoitures().stream()
+                .filter(pv -> pv.getTypePlace() != null && pv.getTypePlace().getId() == 2)
+                .mapToInt(PlaceVoiture::getNombrePlace)
+                .sum();
+    }
+
+    // Prix unitaire Standard
+    public BigDecimal getPrixStandard() {
+        if (voiture == null || voiture.getPlaceVoitures() == null) return BigDecimal.ZERO;
+        return voiture.getPlaceVoitures().stream()
+                .filter(pv -> pv.getTypePlace() != null && pv.getTypePlace().getId() == 1)
+                .map(PlaceVoiture::getPrix)
+                .findFirst()
+                .orElse(BigDecimal.ZERO);
+    }
+
+    // Prix unitaire VIP
+    public BigDecimal getPrixVip() {
+        if (voiture == null || voiture.getPlaceVoitures() == null) return BigDecimal.ZERO;
+        return voiture.getPlaceVoitures().stream()
+                .filter(pv -> pv.getTypePlace() != null && pv.getTypePlace().getId() == 2)
+                .map(PlaceVoiture::getPrix)
+                .findFirst()
+                .orElse(BigDecimal.ZERO);
+    }
+
     // Calcul des places Standard restantes (type_place = 1)
     public int getPlacesStandardRestantes() {
         if (voiture == null || voiture.getPlaceVoitures() == null) return 0;
