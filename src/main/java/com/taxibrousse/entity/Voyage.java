@@ -3,7 +3,10 @@ package com.taxibrousse.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name = "voyage")
@@ -59,6 +62,32 @@ public class Voyage {
     public int getPlacesRestantes() {
         int placesReservees = reservations != null ? reservations.stream().mapToInt(Reservation::getNbPlaces).sum() : 0;
         return voiture.getCapacite() - placesReservees;
+    }
+
+    // Retourne la liste des infos de places par type (pour boucler dans Thymeleaf)
+    public List<Map<String, Object>> getPlacesParType() {
+        List<Map<String, Object>> result = new ArrayList<>();
+        if (voiture == null || voiture.getPlaceVoitures() == null) return result;
+        
+        for (PlaceVoiture pv : voiture.getPlaceVoitures()) {
+            Map<String, Object> info = new HashMap<>();
+            info.put("typePlace", pv.getTypePlace());
+            info.put("libelle", pv.getTypePlace() != null ? pv.getTypePlace().getLibelle() : "Inconnu");
+            info.put("total", pv.getNombrePlace() != null ? pv.getNombrePlace() : 0);
+            info.put("prix", pv.getPrix() != null ? pv.getPrix() : BigDecimal.ZERO);
+            
+            // Calculer les places restantes pour ce type
+            int placesReservees = reservations != null ? reservations.stream()
+                    .filter(r -> r.getTypePlace() != null && pv.getTypePlace() != null 
+                            && r.getTypePlace().getId().equals(pv.getTypePlace().getId()))
+                    .mapToInt(Reservation::getNbPlaces)
+                    .sum() : 0;
+            int restantes = (pv.getNombrePlace() != null ? pv.getNombrePlace() : 0) - placesReservees;
+            info.put("restantes", restantes);
+            
+            result.add(info);
+        }
+        return result;
     }
 
     // Capacité totale Standard de la voiture

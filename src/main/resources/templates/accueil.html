@@ -49,9 +49,7 @@
             <th>Trajet</th>
             <th>Date</th>
             <th>Durée (h)</th>
-            
-            <th>Places Standard</th>
-            <th>Places VIP</th>
+            <th>Places par type</th>
             <th>Total Restant</th>
             <th>CA Actuel (Ar)</th>
             <th>CA Max (Ar)</th>
@@ -65,13 +63,15 @@
             <td th:text="${#temporals.format(voyage.dateHeure, 'dd/MM/yyyy')}"></td>
             <td th:text="${voyage.dureVoyage}"></td>
             <td>
-                <span th:text="${voyage.placesStandardRestantes}" th:class="${voyage.placesStandardRestantes > 0 ? 'text-success' : 'text-danger'}"></span>
-            </td>
-            <td>
-                <span th:text="${voyage.placesVipRestantes}" th:class="${voyage.placesVipRestantes > 0 ? 'text-success' : 'text-danger'}"></span>
+                <div th:each="place : ${voyage.placesParType}" class="mb-1">
+                    <span th:text="${place.libelle}" class="fw-bold"></span> : 
+                    <span th:text="${place.restantes}" th:class="${place.restantes > 0 ? 'text-success fw-bold' : 'text-danger fw-bold'}"></span>
+                    <span class="text-muted">/ <span th:text="${place.total}"></span></span>
+                </div>
             </td>
             <td>
                 <span th:text="${voyage.placesRestantes}" th:class="${voyage.placesRestantes > 0 ? 'badge bg-primary' : 'badge bg-danger'}"></span>
+                <span class="text-muted">/ <span th:text="${voyage.voiture.capacite}"></span></span>
             </td>
             <td>
                 <span th:text="${#numbers.formatDecimal(voyage.chiffreAffairesActuel, 0, 'POINT', 0, 'POINT')}" class="fw-bold text-success"></span>

@@ -40,4 +40,19 @@ public class PlaceVoiture {
 
     public Integer getNombrePlace() { return nombrePlace; }
     public void setNombrePlace(Integer nombrePlace) { this.nombrePlace = nombrePlace; }
+
+    // Calcul des places restantes pour ce type dans un voyage donné
+    public int getPlacesRestantes(Voyage voyage) {
+        if (voyage == null || voyage.getReservations() == null) {
+            return nombrePlace != null ? nombrePlace : 0;
+        }
+        
+        int placesReservees = voyage.getReservations().stream()
+                .filter(r -> r.getTypePlace() != null && typePlace != null 
+                        && r.getTypePlace().getId().equals(typePlace.getId()))
+                .mapToInt(Reservation::getNbPlaces)
+                .sum();
+        
+        return (nombrePlace != null ? nombrePlace : 0) - placesReservees;
+    }
 }
