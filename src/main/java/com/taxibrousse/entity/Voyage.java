@@ -79,6 +79,17 @@ public class Voyage {
             int restantes = (pv.getNombrePlace() != null ? pv.getNombrePlace() : 0) - placesReservees;
             info.put("restantes", restantes);
             
+            // Trouver le prix adulte pour ce type de place (pour calculer le prix senior)
+            BigDecimal prixAdulte = BigDecimal.ZERO;
+            if (pv.getPlaceVoitureCats() != null) {
+                prixAdulte = pv.getPlaceVoitureCats().stream()
+                        .filter(pvc -> pvc.getCategorie() != null && 
+                                       pvc.getCategorie().getId().equals(PlaceVoitureCat.ID_ADULTE))
+                        .map(PlaceVoitureCat::getPrix)
+                        .findFirst()
+                        .orElse(BigDecimal.ZERO);
+            }
+            
             // Ajouter les prix par catégorie
             List<Map<String, Object>> prixParCategorie = new ArrayList<>();
             if (pv.getPlaceVoitureCats() != null) {
@@ -86,7 +97,15 @@ public class Voyage {
                     Map<String, Object> prixInfo = new HashMap<>();
                     prixInfo.put("categorie", pvc.getCategorie());
                     prixInfo.put("categorieLib", pvc.getCategorie() != null ? pvc.getCategorie().getLib() : "Inconnu");
-                    prixInfo.put("prix", pvc.getPrix() != null ? pvc.getPrix() : BigDecimal.ZERO);
+                    
+                    // Pour les seniors, calculer le prix réel basé sur le prix adulte
+                    BigDecimal prixAffiche;
+                    if (pvc.isSenior() && prixAdulte.compareTo(BigDecimal.ZERO) > 0) {
+                        prixAffiche = pvc.calculerPrixSenior(prixAdulte);
+                    } else {
+                        prixAffiche = pvc.getPrix() != null ? pvc.getPrix() : BigDecimal.ZERO;
+                    }
+                    prixInfo.put("prix", prixAffiche);
                     prixParCategorie.add(prixInfo);
                 }
             }
@@ -150,18 +169,36 @@ public class Voyage {
     }
 
     // Calcul du chiffre d'affaires maximum (somme des prix max par type de place * nombre de places)
-    // On prend le prix le plus élevé parmi les catégories pour chaque type
+    // On prend le prix le plus élevé parmi les catégories pour chaque type (en calculant le prix réel pour les seniors)
     public BigDecimal getChiffreAffairesMax() {
         if (voiture == null || voiture.getPlaceVoitures() == null) return BigDecimal.ZERO;
         
         return voiture.getPlaceVoitures().stream()
                 .map(pv -> {
                     BigDecimal nbPlaces = BigDecimal.valueOf(pv.getNombrePlace() != null ? pv.getNombrePlace() : 0);
-                    // Trouver le prix max parmi les catégories
+                    
+                    // Trouver le prix adulte pour ce type de place
+                    BigDecimal prixAdulte = BigDecimal.ZERO;
+                    if (pv.getPlaceVoitureCats() != null) {
+                        prixAdulte = pv.getPlaceVoitureCats().stream()
+                                .filter(pvc -> pvc.getCategorie() != null && 
+                                               pvc.getCategorie().getId().equals(PlaceVoitureCat.ID_ADULTE))
+                                .map(PlaceVoitureCat::getPrix)
+                                .findFirst()
+                                .orElse(BigDecimal.ZERO);
+                    }
+                    
+                    // Trouver le prix max parmi les catégories (en calculant le prix réel pour les seniors)
                     BigDecimal prixMax = BigDecimal.ZERO;
+                    final BigDecimal prixAdulteFinal = prixAdulte;
                     if (pv.getPlaceVoitureCats() != null) {
                         prixMax = pv.getPlaceVoitureCats().stream()
-                                .map(pvc -> pvc.getPrix() != null ? pvc.getPrix() : BigDecimal.ZERO)
+                                .map(pvc -> {
+                                    if (pvc.isSenior() && prixAdulteFinal.compareTo(BigDecimal.ZERO) > 0) {
+                                        return pvc.calculerPrixSenior(prixAdulteFinal);
+                                    }
+                                    return pvc.getPrix() != null ? pvc.getPrix() : BigDecimal.ZERO;
+                                })
                                 .max(BigDecimal::compareTo)
                                 .orElse(BigDecimal.ZERO);
                     }
@@ -171,6 +208,7 @@ public class Voyage {
     }
 
     // Calcul du chiffre d'affaires actuel (places réservées * prix selon catégorie)
+    // Pour les seniors, le prix est calculé : prix_adulte - (prix_adulte × pourcentage/100)
     public BigDecimal getChiffreAffairesActuel() {
         if (reservations == null || reservations.isEmpty() || voiture == null || voiture.getPlaceVoitures() == null) {
             return BigDecimal.ZERO;
@@ -180,14 +218,37 @@ public class Voyage {
                 .map(r -> {
                     if (r.getTypePlace() == null || r.getCategorie() == null) return BigDecimal.ZERO;
                     
-                    // Trouver le prix correspondant au type de place ET à la catégorie
-                    BigDecimal prixPlace = voiture.getPlaceVoitures().stream()
+                    // Trouver le PlaceVoiture correspondant au type de place
+                    PlaceVoiture placeVoiture = voiture.getPlaceVoitures().stream()
                             .filter(pv -> pv.getTypePlace() != null && pv.getTypePlace().getId().equals(r.getTypePlace().getId()))
-                            .flatMap(pv -> pv.getPlaceVoitureCats() != null ? pv.getPlaceVoitureCats().stream() : java.util.stream.Stream.empty())
-                            .filter(pvc -> pvc.getCategorie() != null && pvc.getCategorie().getId().equals(r.getCategorie().getId()))
+                            .findFirst()
+                            .orElse(null);
+                    
+                    if (placeVoiture == null || placeVoiture.getPlaceVoitureCats() == null) return BigDecimal.ZERO;
+                    
+                    // Trouver le prix adulte pour calculer le prix senior si nécessaire
+                    BigDecimal prixAdulte = placeVoiture.getPlaceVoitureCats().stream()
+                            .filter(pvc -> pvc.getCategorie() != null && 
+                                           pvc.getCategorie().getId().equals(PlaceVoitureCat.ID_ADULTE))
                             .map(PlaceVoitureCat::getPrix)
                             .findFirst()
                             .orElse(BigDecimal.ZERO);
+                    
+                    // Trouver le PlaceVoitureCat pour la catégorie de la réservation
+                    PlaceVoitureCat pvc = placeVoiture.getPlaceVoitureCats().stream()
+                            .filter(p -> p.getCategorie() != null && p.getCategorie().getId().equals(r.getCategorie().getId()))
+                            .findFirst()
+                            .orElse(null);
+                    
+                    if (pvc == null) return BigDecimal.ZERO;
+                    
+                    // Calculer le prix réel
+                    BigDecimal prixPlace;
+                    if (pvc.isSenior() && prixAdulte.compareTo(BigDecimal.ZERO) > 0) {
+                        prixPlace = pvc.calculerPrixSenior(prixAdulte);
+                    } else {
+                        prixPlace = pvc.getPrix() != null ? pvc.getPrix() : BigDecimal.ZERO;
+                    }
                     
                     return BigDecimal.valueOf(r.getNbPlaces()).multiply(prixPlace);
                 })

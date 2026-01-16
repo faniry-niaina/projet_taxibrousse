@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ReservationService {
@@ -139,6 +141,65 @@ public class ReservationService {
 
     public List<Categorie> getAllCategories() {
         return categorieRepository.findAll();
+    }
+
+    /**
+     * Calcule le prix unitaire pour un voyage, un type de place et une catégorie donnés.
+     * Pour les seniors (catégorie id=3), le prix est calculé comme :
+     * prix_senior = prix_adulte - (prix_adulte × pourcentage_reduction / 100)
+     * 
+     * @param voitureId l'ID de la voiture
+     * @param typePlaceId l'ID du type de place
+     * @param categorieId l'ID de la catégorie (1=Adulte, 2=Enfant, 3=Senior)
+     * @return le prix unitaire calculé
+     */
+    public BigDecimal getPrixUnitaire(Integer voitureId, Integer typePlaceId, Integer categorieId) {
+        List<PlaceVoitureCat> prixConfigs = placeVoitureCatRepository
+                .findByPlaceVoiture_Voiture_IdAndPlaceVoiture_TypePlace_Id(voitureId, typePlaceId);
+        
+        if (prixConfigs.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        // Si c'est un senior, on doit calculer le prix basé sur le prix adulte
+        if (categorieId != null && categorieId.equals(PlaceVoitureCat.ID_SENIOR)) {
+            // Trouver le prix adulte
+            Optional<PlaceVoitureCat> prixAdulteOpt = prixConfigs.stream()
+                    .filter(p -> p.getCategorie() != null && 
+                                 p.getCategorie().getId().equals(PlaceVoitureCat.ID_ADULTE))
+                    .findFirst();
+            
+            // Trouver la config senior (qui contient le pourcentage de réduction)
+            Optional<PlaceVoitureCat> configSeniorOpt = prixConfigs.stream()
+                    .filter(p -> p.getCategorie() != null && 
+                                 p.getCategorie().getId().equals(PlaceVoitureCat.ID_SENIOR))
+                    .findFirst();
+            
+            if (prixAdulteOpt.isPresent() && configSeniorOpt.isPresent()) {
+                BigDecimal prixAdulte = prixAdulteOpt.get().getPrix();
+                return configSeniorOpt.get().calculerPrixSenior(prixAdulte);
+            }
+        }
+
+        // Pour les autres catégories (Adulte, Enfant), on retourne directement le prix stocké
+        return prixConfigs.stream()
+                .filter(p -> p.getCategorie() != null && p.getCategorie().getId().equals(categorieId))
+                .findFirst()
+                .map(PlaceVoitureCat::getPrix)
+                .orElse(BigDecimal.ZERO);
+    }
+
+    /**
+     * Calcule le prix total d'une réservation
+     * @param voitureId l'ID de la voiture
+     * @param typePlaceId l'ID du type de place
+     * @param categorieId l'ID de la catégorie
+     * @param nbPlaces le nombre de places
+     * @return le prix total
+     */
+    public BigDecimal calculerPrixTotal(Integer voitureId, Integer typePlaceId, Integer categorieId, int nbPlaces) {
+        BigDecimal prixUnitaire = getPrixUnitaire(voitureId, typePlaceId, categorieId);
+        return prixUnitaire.multiply(new BigDecimal(nbPlaces));
     }
 
     // Classe interne pour représenter une ligne de réservation

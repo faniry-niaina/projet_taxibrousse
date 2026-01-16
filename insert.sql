@@ -20,7 +20,11 @@ INSERT INTO type_place (id, libelle) VALUES
 -- =================================
 INSERT INTO categorie (id, lib) VALUES
 (1, 'Adulte'),
-(2, 'Enfant');
+(2, 'Enfant'),
+(3, 'Senior');
+
+INSERT INTO categorie (id, lib) VALUES
+(3, 'Senior');
 
 -- =================================
 -- 4️⃣ GARES
@@ -92,3 +96,17 @@ INSERT INTO reservation (id, nomClient, nbPlaces, idVoyage, idStatus, type_place
 (1, 'Rakoto Jean', 2, 1, 1, 1, 1),      -- Standard Adulte
 (2, 'Rabe Paul', 3, 1, 1, 2, 1),        -- Premium Adulte
 (3, 'Ranaivo Lala', 1, 1, 1, 1, 2);     -- Standard Enfant
+
+
+
+
+INSERT INTO place_voiture_cat (id, id_categorie, id_place_voiture, prix) VALUES
+(7, 3, 1, 20.00);
+
+-- Premium Senior (réduction 20% sur 140000 = prix réel 112000)
+INSERT INTO place_voiture_cat (id, id_categorie, id_place_voiture, prix) VALUES
+(8, 3, 2, 20.00);
+
+-- VIP Senior (réduction 20% sur 190000 = prix réel 152000)
+INSERT INTO place_voiture_cat (id, id_categorie, id_place_voiture, prix) VALUES
+(9, 3, 3, 20.00);

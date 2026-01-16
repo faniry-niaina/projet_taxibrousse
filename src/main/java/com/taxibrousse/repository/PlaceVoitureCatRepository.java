@@ -13,4 +13,7 @@ public interface PlaceVoitureCatRepository extends JpaRepository<PlaceVoitureCat
     List<PlaceVoitureCat> findByPlaceVoitureId(Integer placeVoitureId);
     
     Optional<PlaceVoitureCat> findByPlaceVoitureIdAndCategorieId(Integer placeVoitureId, Integer categorieId);
+
+    // Trouver les prix par voiture et type de place
+    List<PlaceVoitureCat> findByPlaceVoiture_Voiture_IdAndPlaceVoiture_TypePlace_Id(Integer voitureId, Integer typePlaceId);
 }
