@@ -9,6 +9,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Controller
 @RequestMapping("/reservation")
 public class ReservationController {
@@ -32,23 +35,47 @@ public class ReservationController {
         }
         model.addAttribute("voyage", voyage);
         model.addAttribute("typePlaces", reservationService.getAllTypePlaces());
+        model.addAttribute("categories", reservationService.getAllCategories());
         return "reservationForm";
     }
 
     @PostMapping("/{voyageId}")
     public String reserver(@PathVariable Integer voyageId,
                            @RequestParam String nomClient,
-                           @RequestParam int nbPlaces,
-                           @RequestParam(required = false) Integer typePlaceId,
+                           @RequestParam(value = "typePlaceId[]", required = false) Integer[] typePlaceIds,
+                           @RequestParam(value = "categorieId[]", required = false) Integer[] categorieIds,
+                           @RequestParam(value = "nbPlaces[]", required = false) Integer[] nbPlacesArray,
                            RedirectAttributes redirectAttributes) {
 
-        String erreur = reservationService.reserver(voyageId, nomClient, nbPlaces, typePlaceId);
+        if (nomClient == null || nomClient.trim().isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Veuillez entrer votre nom");
+            return "redirect:/reservation/" + voyageId;
+        }
+
+        if (typePlaceIds == null || typePlaceIds.length == 0) {
+            redirectAttributes.addFlashAttribute("error", "Veuillez ajouter au moins une ligne de réservation");
+            return "redirect:/reservation/" + voyageId;
+        }
+
+        List<ReservationService.LigneReservation> lignes = new ArrayList<>();
+        for (int i = 0; i < typePlaceIds.length; i++) {
+            if (typePlaceIds[i] != null && categorieIds[i] != null && nbPlacesArray[i] != null && nbPlacesArray[i] > 0) {
+                lignes.add(new ReservationService.LigneReservation(typePlaceIds[i], categorieIds[i], nbPlacesArray[i]));
+            }
+        }
+
+        if (lignes.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Veuillez ajouter au moins une ligne de réservation valide");
+            return "redirect:/reservation/" + voyageId;
+        }
+
+        String erreur = reservationService.reserverMultiple(voyageId, nomClient, lignes);
         if (erreur != null) {
             redirectAttributes.addFlashAttribute("error", erreur);
             return "redirect:/reservation/" + voyageId;
         }
 
-        redirectAttributes.addFlashAttribute("message", "Merci " + nomClient + " pour votre confiance !");
+        redirectAttributes.addFlashAttribute("message", "Merci " + nomClient + " pour votre confiance ! " + lignes.size() + " réservation(s) effectuée(s).");
         return "redirect:/";
     }
 }

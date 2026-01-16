@@ -1,7 +1,7 @@
 package com.taxibrousse.entity;
 
 import jakarta.persistence.*;
-import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Table(name = "place_voiture")
@@ -15,15 +15,15 @@ public class PlaceVoiture {
     @JoinColumn(name = "id_type_place")
     private TypePlace typePlace;
 
-    @Column(precision = 10, scale = 2)
-    private BigDecimal prix;
-
     @ManyToOne
     @JoinColumn(name = "id_voiture")
     private Voiture voiture;
 
     @Column(name = "nombre_place")
     private Integer nombrePlace;
+
+    @OneToMany(mappedBy = "placeVoiture")
+    private List<PlaceVoitureCat> placeVoitureCats;
 
     // Getters et Setters
     public Integer getId() { return id; }
@@ -32,27 +32,12 @@ public class PlaceVoiture {
     public TypePlace getTypePlace() { return typePlace; }
     public void setTypePlace(TypePlace typePlace) { this.typePlace = typePlace; }
 
-    public BigDecimal getPrix() { return prix; }
-    public void setPrix(BigDecimal prix) { this.prix = prix; }
-
     public Voiture getVoiture() { return voiture; }
     public void setVoiture(Voiture voiture) { this.voiture = voiture; }
 
     public Integer getNombrePlace() { return nombrePlace; }
     public void setNombrePlace(Integer nombrePlace) { this.nombrePlace = nombrePlace; }
 
-    // Calcul des places restantes pour ce type dans un voyage donné
-    public int getPlacesRestantes(Voyage voyage) {
-        if (voyage == null || voyage.getReservations() == null) {
-            return nombrePlace != null ? nombrePlace : 0;
-        }
-        
-        int placesReservees = voyage.getReservations().stream()
-                .filter(r -> r.getTypePlace() != null && typePlace != null 
-                        && r.getTypePlace().getId().equals(typePlace.getId()))
-                .mapToInt(Reservation::getNbPlaces)
-                .sum();
-        
-        return (nombrePlace != null ? nombrePlace : 0) - placesReservees;
-    }
+    public List<PlaceVoitureCat> getPlaceVoitureCats() { return placeVoitureCats; }
+    public void setPlaceVoitureCats(List<PlaceVoitureCat> placeVoitureCats) { this.placeVoitureCats = placeVoitureCats; }
 }

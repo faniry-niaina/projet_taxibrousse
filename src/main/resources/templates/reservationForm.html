@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Réserver un voyage</title>
     <link th:href="@{/bootstrap/css/bootstrap.min.css}" rel="stylesheet">
-    
 </head>
 <body>
 <div class="container py-4">
@@ -17,59 +16,260 @@
 
     <div class="card p-3 mb-4">
         <h5 class="card-title" th:text="${voyage.trajet.depart.nom} + ' → ' + ${voyage.trajet.arrive.nom}"></h5>
-        <p>Date : <span th:text="${#temporals.format(voyage.dateHeure, 'dd/MM/yyyy')}"></span></p>
+        <p>Date : <span th:text="${#temporals.format(voyage.dateHeure, 'dd/MM/yyyy HH:mm')}"></span></p>
         <p>Durée : <span th:text="${voyage.dureVoyage}"></span> h</p>
-        <p>Prix : <span th:text="${voyage.prix}"></span> Ar</p>
         <hr>
         <h6>Informations sur la voiture</h6>
         <p>Matricule : <span class="fw-bold" th:text="${voyage.voiture.matricule}"></span></p>
         <p>Capacité totale : <span class="badge bg-secondary" th:text="${voyage.voiture.capacite}"></span> places</p>
         
-        <h6>Capacité et prix par type de place</h6>
-        <div class="row">
-            <div th:each="place : ${voyage.placesParType}" class="col-md-6 mb-2">
-                <div class="card p-2">
-                    <strong th:text="${place.libelle}"></strong>
-                    <p class="mb-1">Capacité : <span class="badge bg-info" th:text="${place.total}"></span> places</p>
-                    <p class="mb-1">Prix unitaire : <span class="fw-bold text-primary" th:text="${place.prix}"></span> Ar</p>
-                </div>
-            </div>
-        </div>
         <hr>
-        <h6>Places disponibles</h6>
-        <div class="row">
-            <div th:each="place : ${voyage.placesParType}" class="col-md-6 mb-2">
-                <p>
-                    <span th:text="${place.libelle}" class="fw-bold"></span> : 
-                    <span th:text="${place.restantes}" th:class="${place.restantes > 0 ? 'badge bg-success' : 'badge bg-danger'}"></span>
-                    / <span th:text="${place.total}"></span>
-                </p>
-            </div>
+        <h6>Places et tarifs par type</h6>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>Type de place</th>
+                        <th>Capacité</th>
+                        <th>Disponibles</th>
+                        <th th:each="cat : ${categories}" th:text="${cat.lib} + ' (Ar)'"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="place : ${voyage.placesParType}">
+                        <td th:text="${place.libelle}" class="fw-bold"></td>
+                        <td><span class="badge bg-info" th:text="${place.total}"></span></td>
+                        <td>
+                            <span th:text="${place.restantes}" th:class="${place.restantes > 0 ? 'badge bg-success' : 'badge bg-danger'}"></span>
+                        </td>
+                        <td th:each="prixCat : ${place.prixParCategorie}">
+                            <span th:text="${prixCat.prix}" class="fw-bold text-primary"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <form th:action="@{/reservation/{id}(id=${voyage.id})}" method="post" class="row g-3">
-        <div class="col-md-6">
-            <label for="nomClient" class="form-label">Votre nom</label>
-            <input type="text" id="nomClient" name="nomClient" class="form-control" required>
-        </div>
-        <div class="col-md-6">
-            <label for="nbPlaces" class="form-label">Nombre de places</label>
-            <input type="number" id="nbPlaces" name="nbPlaces" class="form-control" min="1" th:attr="max=${voyage.placesRestantes}" required>
-        </div>
-        <div class="col-md-6">
-            <label for="typePlaceId" class="form-label">Type de place</label>
-            <select id="typePlaceId" name="typePlaceId" class="form-select" required>
-                <option value="">-- Sélectionner --</option>
-                <option th:each="tp : ${typePlaces}" th:value="${tp.id}" th:text="${tp.libelle}"></option>
-            </select>
-        </div>
-        <div class="col-12">
-            <button type="submit" class="btn btn-primary">Confirmer la réservation</button>
-            <a th:href="@{/}" class="btn btn-secondary">Annuler</a>
-        </div>
-    </form>
+    <!-- Formulaire de réservation -->
+    <div class="card p-3 mb-4">
+        <h5>Nouvelle réservation</h5>
+        <form th:action="@{/reservation/{id}(id=${voyage.id})}" method="post" id="reservationForm">
+            <div class="mb-3">
+                <label for="nomClient" class="form-label">Votre nom</label>
+                <input type="text" id="nomClient" name="nomClient" class="form-control" required>
+            </div>
+
+            <hr>
+            <h6>Ajouter des places</h6>
+            
+            <!-- Zone pour ajouter une nouvelle ligne -->
+            <div class="row mb-3 align-items-end bg-light p-2 rounded">
+                <div class="col-md-3">
+                    <label class="form-label">Catégorie</label>
+                    <select id="newCategorie" class="form-select">
+                        <option value="">-- Catégorie --</option>
+                        <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.lib}"></option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Type de place</label>
+                    <select id="newTypePlace" class="form-select">
+                        <option value="">-- Type de place --</option>
+                        <option th:each="tp : ${typePlaces}" th:value="${tp.id}" th:text="${tp.libelle}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Nombre</label>
+                    <input type="number" id="newNbPlaces" class="form-control" min="1" value="1">
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-success w-100" onclick="validerLigne()">
+                        ✓ Valider la ligne
+                    </button>
+                </div>
+            </div>
+
+            <hr>
+            <h6>Lignes validées</h6>
+            
+            <!-- Tableau des lignes validées -->
+            <table class="table table-bordered" id="tableLignes">
+                <thead class="table-light">
+                    <tr>
+                        <th>Catégorie</th>
+                        <th>Type de place</th>
+                        <th>Nombre</th>
+                        <th>Prix unitaire</th>
+                        <th>Sous-total</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="lignesValidees">
+                    <!-- Les lignes validées apparaissent ici -->
+                </tbody>
+                <tfoot>
+                    <tr class="table-primary">
+                        <td colspan="4" class="text-end fw-bold">TOTAL :</td>
+                        <td id="totalGeneral" class="fw-bold">0 Ar</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- Champs cachés pour le formulaire -->
+            <div id="hiddenInputs"></div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" id="btnConfirmer" disabled>
+                    Confirmer la réservation
+                </button>
+                <a th:href="@{/}" class="btn btn-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
 
 </div>
+
+<script th:inline="javascript">
+    // Construire les données manuellement pour éviter les problèmes de sérialisation
+    const placesParType = [];
+    /*[# th:each="p : ${voyage.placesParType}"]*/
+    placesParType.push({
+        typePlaceId: /*[[${p.typePlace.id}]]*/ 0,
+        libelle: /*[[${p.libelle}]]*/ '',
+        total: /*[[${p.total}]]*/ 0,
+        restantes: /*[[${p.restantes}]]*/ 0,
+        prixParCategorie: [
+            /*[# th:each="pc : ${p.prixParCategorie}"]*/
+            { categorieId: /*[[${pc.categorie.id}]]*/ 0, prix: /*[[${pc.prix}]]*/ 0 },
+            /*[/]*/
+        ]
+    });
+    /*[/]*/
+    
+    let lignesValidees = [];
+    let ligneId = 0;
+
+    function getPlacesRestantes(typePlaceId) {
+        const info = placesParType.find(p => p.typePlaceId == typePlaceId);
+        return info ? info.restantes : 0;
+    }
+
+    function getPrix(typePlaceId, categorieId) {
+        const info = placesParType.find(p => p.typePlaceId == typePlaceId);
+        if (info && info.prixParCategorie) {
+            const prixInfo = info.prixParCategorie.find(pc => pc.categorieId == categorieId);
+            return prixInfo ? prixInfo.prix : 0;
+        }
+        return 0;
+    }
+
+    function validerLigne() {
+        const categorieSelect = document.getElementById('newCategorie');
+        const typePlaceSelect = document.getElementById('newTypePlace');
+        const nbPlacesInput = document.getElementById('newNbPlaces');
+        
+        const categorieId = categorieSelect.value;
+        const typePlaceId = typePlaceSelect.value;
+        const nbPlaces = parseInt(nbPlacesInput.value);
+        
+        if (!categorieId || !typePlaceId || !nbPlaces || nbPlaces < 1) {
+            alert('Veuillez remplir tous les champs');
+            return;
+        }
+        
+        const categorieLib = categorieSelect.options[categorieSelect.selectedIndex].text;
+        const typePlaceLib = typePlaceSelect.options[typePlaceSelect.selectedIndex].text;
+        const prix = getPrix(typePlaceId, categorieId);
+        const restantes = getPlacesRestantes(typePlaceId);
+        
+        // Vérifier les places disponibles (en tenant compte des lignes déjà ajoutées)
+        const dejaReserve = lignesValidees
+            .filter(l => l.typePlaceId == typePlaceId)
+            .reduce((sum, l) => sum + l.nbPlaces, 0);
+        
+        if (nbPlaces > (restantes - dejaReserve)) {
+            alert(`Il ne reste que ${restantes - dejaReserve} place(s) ${typePlaceLib} disponible(s)`);
+            return;
+        }
+        
+        ligneId++;
+        const ligne = {
+            id: ligneId,
+            categorieId: categorieId,
+            categorieLib: categorieLib,
+            typePlaceId: typePlaceId,
+            typePlaceLib: typePlaceLib,
+            nbPlaces: nbPlaces,
+            prix: prix,
+            sousTotal: nbPlaces * prix
+        };
+        
+        lignesValidees.push(ligne);
+        afficherLignes();
+        
+        // Réinitialiser les champs
+        categorieSelect.value = '';
+        typePlaceSelect.value = '';
+        nbPlacesInput.value = 1;
+    }
+
+    function supprimerLigne(id) {
+        lignesValidees = lignesValidees.filter(l => l.id !== id);
+        afficherLignes();
+    }
+
+    function afficherLignes() {
+        const tbody = document.getElementById('lignesValidees');
+        const hiddenInputs = document.getElementById('hiddenInputs');
+        
+        tbody.innerHTML = '';
+        hiddenInputs.innerHTML = '';
+        
+        let total = 0;
+        
+        lignesValidees.forEach(ligne => {
+            total += ligne.sousTotal;
+            
+            // Ligne du tableau
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${ligne.categorieLib}</td>
+                <td>${ligne.typePlaceLib}</td>
+                <td>${ligne.nbPlaces}</td>
+                <td>${ligne.prix.toLocaleString()} Ar</td>
+                <td class="fw-bold">${ligne.sousTotal.toLocaleString()} Ar</td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="supprimerLigne(${ligne.id})">
+                        ✗
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+            
+            // Champs cachés
+            hiddenInputs.innerHTML += `
+                <input type="hidden" name="categorieId[]" value="${ligne.categorieId}">
+                <input type="hidden" name="typePlaceId[]" value="${ligne.typePlaceId}">
+                <input type="hidden" name="nbPlaces[]" value="${ligne.nbPlaces}">
+            `;
+        });
+        
+        document.getElementById('totalGeneral').textContent = total.toLocaleString() + ' Ar';
+        document.getElementById('btnConfirmer').disabled = lignesValidees.length === 0;
+        
+        // Message si pas de lignes
+        if (lignesValidees.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Aucune ligne ajoutée</td></tr>';
+        }
+    }
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+        afficherLignes();
+    });
+</script>
+
 </body>
 </html>

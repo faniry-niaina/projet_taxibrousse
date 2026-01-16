@@ -2,7 +2,7 @@ package com.taxibrousse.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,13 +25,10 @@ public class Voyage {
     private Trajet trajet;
 
     @Column(name = "dateHeure", nullable = false)
-    private LocalDate dateHeure;
+    private LocalDateTime dateHeure;
 
     @Column(name = "dureVoyage", nullable = false)
     private Integer dureVoyage; // en heures
-
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal prix;
 
     @OneToMany(mappedBy = "voyage")
     private List<Reservation> reservations;
@@ -46,14 +43,11 @@ public class Voyage {
     public Trajet getTrajet() { return trajet; }
     public void setTrajet(Trajet trajet) { this.trajet = trajet; }
 
-    public LocalDate getDateHeure() { return dateHeure; }
-    public void setDateHeure(LocalDate dateHeure) { this.dateHeure = dateHeure; }
+    public LocalDateTime getDateHeure() { return dateHeure; }
+    public void setDateHeure(LocalDateTime dateHeure) { this.dateHeure = dateHeure; }
 
     public Integer getDureVoyage() { return dureVoyage; }
     public void setDureVoyage(Integer dureVoyage) { this.dureVoyage = dureVoyage; }
-
-    public BigDecimal getPrix() { return prix; }
-    public void setPrix(BigDecimal prix) { this.prix = prix; }
 
     public List<Reservation> getReservations() { return reservations; }
     public void setReservations(List<Reservation> reservations) { this.reservations = reservations; }
@@ -71,12 +65,12 @@ public class Voyage {
         
         for (PlaceVoiture pv : voiture.getPlaceVoitures()) {
             Map<String, Object> info = new HashMap<>();
+            info.put("placeVoiture", pv);
             info.put("typePlace", pv.getTypePlace());
             info.put("libelle", pv.getTypePlace() != null ? pv.getTypePlace().getLibelle() : "Inconnu");
             info.put("total", pv.getNombrePlace() != null ? pv.getNombrePlace() : 0);
-            info.put("prix", pv.getPrix() != null ? pv.getPrix() : BigDecimal.ZERO);
             
-            // Calculer les places restantes pour ce type
+            // Calculer les places restantes pour ce type (toutes catégories confondues)
             int placesReservees = reservations != null ? reservations.stream()
                     .filter(r -> r.getTypePlace() != null && pv.getTypePlace() != null 
                             && r.getTypePlace().getId().equals(pv.getTypePlace().getId()))
@@ -84,6 +78,19 @@ public class Voyage {
                     .sum() : 0;
             int restantes = (pv.getNombrePlace() != null ? pv.getNombrePlace() : 0) - placesReservees;
             info.put("restantes", restantes);
+            
+            // Ajouter les prix par catégorie
+            List<Map<String, Object>> prixParCategorie = new ArrayList<>();
+            if (pv.getPlaceVoitureCats() != null) {
+                for (PlaceVoitureCat pvc : pv.getPlaceVoitureCats()) {
+                    Map<String, Object> prixInfo = new HashMap<>();
+                    prixInfo.put("categorie", pvc.getCategorie());
+                    prixInfo.put("categorieLib", pvc.getCategorie() != null ? pvc.getCategorie().getLib() : "Inconnu");
+                    prixInfo.put("prix", pvc.getPrix() != null ? pvc.getPrix() : BigDecimal.ZERO);
+                    prixParCategorie.add(prixInfo);
+                }
+            }
+            info.put("prixParCategorie", prixParCategorie);
             
             result.add(info);
         }
@@ -106,26 +113,6 @@ public class Voyage {
                 .filter(pv -> pv.getTypePlace() != null && pv.getTypePlace().getId() == 2)
                 .mapToInt(PlaceVoiture::getNombrePlace)
                 .sum();
-    }
-
-    // Prix unitaire Standard
-    public BigDecimal getPrixStandard() {
-        if (voiture == null || voiture.getPlaceVoitures() == null) return BigDecimal.ZERO;
-        return voiture.getPlaceVoitures().stream()
-                .filter(pv -> pv.getTypePlace() != null && pv.getTypePlace().getId() == 1)
-                .map(PlaceVoiture::getPrix)
-                .findFirst()
-                .orElse(BigDecimal.ZERO);
-    }
-
-    // Prix unitaire VIP
-    public BigDecimal getPrixVip() {
-        if (voiture == null || voiture.getPlaceVoitures() == null) return BigDecimal.ZERO;
-        return voiture.getPlaceVoitures().stream()
-                .filter(pv -> pv.getTypePlace() != null && pv.getTypePlace().getId() == 2)
-                .map(PlaceVoiture::getPrix)
-                .findFirst()
-                .orElse(BigDecimal.ZERO);
     }
 
     // Calcul des places Standard restantes (type_place = 1)
@@ -162,20 +149,28 @@ public class Voyage {
         return placesVipTotal - placesVipReservees;
     }
 
-    // Calcul du chiffre d'affaires maximum (nombre de places * prix pour chaque type)
+    // Calcul du chiffre d'affaires maximum (somme des prix max par type de place * nombre de places)
+    // On prend le prix le plus élevé parmi les catégories pour chaque type
     public BigDecimal getChiffreAffairesMax() {
         if (voiture == null || voiture.getPlaceVoitures() == null) return BigDecimal.ZERO;
         
         return voiture.getPlaceVoitures().stream()
                 .map(pv -> {
                     BigDecimal nbPlaces = BigDecimal.valueOf(pv.getNombrePlace() != null ? pv.getNombrePlace() : 0);
-                    BigDecimal prixPlace = pv.getPrix() != null ? pv.getPrix() : BigDecimal.ZERO;
-                    return nbPlaces.multiply(prixPlace);
+                    // Trouver le prix max parmi les catégories
+                    BigDecimal prixMax = BigDecimal.ZERO;
+                    if (pv.getPlaceVoitureCats() != null) {
+                        prixMax = pv.getPlaceVoitureCats().stream()
+                                .map(pvc -> pvc.getPrix() != null ? pvc.getPrix() : BigDecimal.ZERO)
+                                .max(BigDecimal::compareTo)
+                                .orElse(BigDecimal.ZERO);
+                    }
+                    return nbPlaces.multiply(prixMax);
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    // Calcul du chiffre d'affaires actuel (places réservées * prix par type)
+    // Calcul du chiffre d'affaires actuel (places réservées * prix selon catégorie)
     public BigDecimal getChiffreAffairesActuel() {
         if (reservations == null || reservations.isEmpty() || voiture == null || voiture.getPlaceVoitures() == null) {
             return BigDecimal.ZERO;
@@ -183,12 +178,14 @@ public class Voyage {
         
         return reservations.stream()
                 .map(r -> {
-                    if (r.getTypePlace() == null) return BigDecimal.ZERO;
+                    if (r.getTypePlace() == null || r.getCategorie() == null) return BigDecimal.ZERO;
                     
-                    // Trouver le prix correspondant au type de place dans la voiture
+                    // Trouver le prix correspondant au type de place ET à la catégorie
                     BigDecimal prixPlace = voiture.getPlaceVoitures().stream()
                             .filter(pv -> pv.getTypePlace() != null && pv.getTypePlace().getId().equals(r.getTypePlace().getId()))
-                            .map(PlaceVoiture::getPrix)
+                            .flatMap(pv -> pv.getPlaceVoitureCats() != null ? pv.getPlaceVoitureCats().stream() : java.util.stream.Stream.empty())
+                            .filter(pvc -> pvc.getCategorie() != null && pvc.getCategorie().getId().equals(r.getCategorie().getId()))
+                            .map(PlaceVoitureCat::getPrix)
                             .findFirst()
                             .orElse(BigDecimal.ZERO);
                     

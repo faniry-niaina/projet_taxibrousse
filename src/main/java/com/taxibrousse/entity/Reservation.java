@@ -28,6 +28,10 @@ public class Reservation {
     @JoinColumn(name = "type_place")
     private TypePlace typePlace;
 
+    @ManyToOne
+    @JoinColumn(name = "id_categorie")
+    private Categorie categorie;
+
     // Getters et Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -46,4 +50,7 @@ public class Reservation {
 
     public TypePlace getTypePlace() { return typePlace; }
     public void setTypePlace(TypePlace typePlace) { this.typePlace = typePlace; }
+
+    public Categorie getCategorie() { return categorie; }
+    public void setCategorie(Categorie categorie) { this.categorie = categorie; }
 }
