@@ -1,5 +1,5 @@
 --standard
-update place_voiture_cat set prix = 50000 where id_place_voiture= 1 and id_categorie=1; --standard adulte
+update place_voiture_cat set prix = 55000 where id_place_voiture= 1 and id_categorie=1; --standard adulte
 update  place_voiture_cat set prix = 40000 where id_place_voiture= 1 and id_categorie=2;--standard enfant
 
 
