@@ -33,6 +33,9 @@ public class Voyage {
     @OneToMany(mappedBy = "voyage")
     private List<Reservation> reservations;
 
+    @OneToMany(mappedBy = "voyage")
+    private List<Publicite> publicites;
+
     // Getters et Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -51,6 +54,9 @@ public class Voyage {
 
     public List<Reservation> getReservations() { return reservations; }
     public void setReservations(List<Reservation> reservations) { this.reservations = reservations; }
+
+    public List<Publicite> getPublicites() { return publicites; }
+    public void setPublicites(List<Publicite> publicites) { this.publicites = publicites; }
 
     // Calcul des places restantes totales
     public int getPlacesRestantes() {

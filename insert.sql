@@ -110,3 +110,27 @@ INSERT INTO place_voiture_cat (id, id_categorie, id_place_voiture, prix) VALUES
 -- VIP Senior (réduction 20% sur 190000 = prix réel 152000)
 INSERT INTO place_voiture_cat (id, id_categorie, id_place_voiture, prix) VALUES
 (9, 3, 3, 20.00);
+
+
+
+INSERT into societe (id,lib,prix_unitaire_pub) values
+(1,'Vaniala',100000),
+(2,'Lewis',100000);
+
+
+insert into publicites(id,id_societe,nombre,date_pub,id_voyage) values
+(1,1,20,'2025-12-15',1),
+(2,2,40,'2025-11-15',1),
+(3,2,10,'2025-12-15',1);
+
+select * from publicites;
+
+
+--Requete Paiement
+INSERT INTO paiement (id_societe, montant_paye, date_paiement) VALUES
+(2, 200000.00, '2025-12-15');
+
+SELECT * from paiement;
+
+
+

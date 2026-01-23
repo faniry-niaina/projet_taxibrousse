@@ -9,7 +9,10 @@
 <body>
 <div class="container py-4">
 
-    <h1 class="mb-4">Bienvenue chez Taxi Brousse</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Bienvenue chez Taxi Brousse</h1>
+        <a th:href="@{/publicites}" class="btn btn-info">📢 Gestion des Publicités</a>
+    </div>
 
     <!-- Messages -->
     <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>

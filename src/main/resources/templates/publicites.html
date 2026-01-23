@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Taxi Brousse - Publicités</title>
+    <link th:href="@{/bootstrap/css/bootstrap.min.css}" rel="stylesheet">
+    <style>
+        .ca-total {
+            background: #343a40;
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .ca-total h2 {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        .voyage-card {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .voyage-header {
+            background-color: #343a40;
+            color: white;
+            padding: 15px 20px;
+        }
+        .societe-section {
+            border-bottom: 1px solid #e9ecef;
+            padding: 15px 20px;
+        }
+        .societe-section:last-child {
+            border-bottom: none;
+        }
+        .societe-header {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .total-societe {
+            background-color: #28a745;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .paye-badge {
+            background-color: #17a2b8;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .reste-badge {
+            background-color: #dc3545;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .reste-badge.solde {
+            background-color: #28a745;
+        }
+        .filter-card {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>📢 Gestion des Publicités</h1>
+        <a th:href="@{/}" class="btn btn-secondary">← Retour à l'accueil</a>
+    </div>
+
+    <!-- Filtre -->
+    <div class="filter-card">
+        <h5 class="mb-3">🔍 Filtrer par période</h5>
+        <form th:action="@{/publicites}" method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="mois" class="form-label">Mois</label>
+                <select id="mois" name="mois" class="form-select">
+                    <option value="">-- Tous les mois --</option>
+                    <option value="1" th:selected="${moisSelectionne == 1}">Janvier</option>
+                    <option value="2" th:selected="${moisSelectionne == 2}">Février</option>
+                    <option value="3" th:selected="${moisSelectionne == 3}">Mars</option>
+                    <option value="4" th:selected="${moisSelectionne == 4}">Avril</option>
+                    <option value="5" th:selected="${moisSelectionne == 5}">Mai</option>
+                    <option value="6" th:selected="${moisSelectionne == 6}">Juin</option>
+                    <option value="7" th:selected="${moisSelectionne == 7}">Juillet</option>
+                    <option value="8" th:selected="${moisSelectionne == 8}">Août</option>
+                    <option value="9" th:selected="${moisSelectionne == 9}">Septembre</option>
+                    <option value="10" th:selected="${moisSelectionne == 10}">Octobre</option>
+                    <option value="11" th:selected="${moisSelectionne == 11}">Novembre</option>
+                    <option value="12" th:selected="${moisSelectionne == 12}">Décembre</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="annee" class="form-label">Année</label>
+                <select id="annee" name="annee" class="form-select">
+                    <option value="">-- Toutes les années --</option>
+                    <option th:each="a : ${annees}" th:value="${a}" th:text="${a}" th:selected="${anneeSelectionnee == a}"></option>
+                </select>
+            </div>
+            <div class="col-md-6 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary">Filtrer</button>
+                <a th:href="@{/publicites}" class="btn btn-outline-secondary">Tout afficher</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Chiffre d'Affaires Total -->
+    <div class="ca-total text-center">
+        <p class="mb-2" th:if="${filtreActif == 'tout'}">💰 Chiffre d'Affaires Total (Toutes les publicités)</p>
+        <p class="mb-2" th:if="${filtreActif == 'periode'}">
+            💰 Chiffre d'Affaires - 
+            <span th:switch="${moisSelectionne}">
+                <span th:case="1">Janvier</span>
+                <span th:case="2">Février</span>
+                <span th:case="3">Mars</span>
+                <span th:case="4">Avril</span>
+                <span th:case="5">Mai</span>
+                <span th:case="6">Juin</span>
+                <span th:case="7">Juillet</span>
+                <span th:case="8">Août</span>
+                <span th:case="9">Septembre</span>
+                <span th:case="10">Octobre</span>
+                <span th:case="11">Novembre</span>
+                <span th:case="12">Décembre</span>
+            </span>
+            <span th:text="${anneeSelectionnee}"></span>
+        </p>
+        <h2 th:text="${#numbers.formatDecimal(chiffreAffairesTotal, 0, 'COMMA', 0, 'POINT')} + ' Ar'">0.00 Ar</h2>
+    </div>
+
+    <!-- Détails des publicités par voyage et société -->
+    <h3 class="mb-4">📋 Détails des publicités par voyage</h3>
+    
+    <div th:if="${#maps.isEmpty(publicitesParVoyageEtSociete)}" class="alert alert-info">
+        Aucune publicité trouvée pour cette période.
+    </div>
+
+    <div th:each="voyageEntry : ${publicitesParVoyageEtSociete}" class="voyage-card">
+        <!-- En-tête du voyage -->
+        <div class="voyage-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>🚐 Voyage #<span th:text="${voyageEntry.key.id}"></span></strong>
+                    <span class="ms-3">
+                        <span th:text="${voyageEntry.key.trajet.depart.nom}"></span>
+                        → 
+                        <span th:text="${voyageEntry.key.trajet.arrive.nom}"></span>
+                    </span>
+                </div>
+                <div>
+                    <span class="badge bg-light text-dark">
+                        📅 <span th:text="${#temporals.format(voyageEntry.key.dateHeure, 'dd/MM/yyyy HH:mm')}"></span>
+                    </span>
+                    <span class="badge bg-info ms-2">
+                        🚗 <span th:text="${voyageEntry.key.voiture.matricule}"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sociétés et leurs publicités -->
+        <div th:each="societeEntry : ${voyageEntry.value}" class="societe-section">
+            <div class="societe-header d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>🏢 <span th:text="${societeEntry.key.lib}"></span></strong>
+                    <span class="text-muted ms-3">
+                        Prix unitaire: <strong th:text="${#numbers.formatDecimal(societeEntry.key.prixUnitairePub, 0, 'COMMA', 0, 'POINT')} + ' Ar'"></strong>
+                    </span>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="total-societe" 
+                          th:text="'Total: ' + ${#numbers.formatDecimal(totauxParSocieteParVoyage[voyageEntry.key.id + '_' + societeEntry.key.id], 0, 'COMMA', 0, 'POINT')} + ' Ar'">
+                    </span>
+                    <span class="paye-badge" 
+                          th:text="'Payé: ' + ${#numbers.formatDecimal(paiementsParSociete[societeEntry.key.id] ?: 0, 0, 'COMMA', 0, 'POINT')} + ' Ar'">
+                    </span>
+                    <span th:class="${resteAPayerParSociete[societeEntry.key.id] != null and resteAPayerParSociete[societeEntry.key.id] <= 0} ? 'reste-badge solde' : 'reste-badge'" 
+                          th:text="'Reste: ' + ${#numbers.formatDecimal(resteAPayerParSociete[societeEntry.key.id] ?: 0, 0, 'COMMA', 0, 'POINT')} + ' Ar'">
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Table des publicités -->
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Date</th>
+                        <th>Nombre</th>
+                        <th>Prix unitaire</th>
+                        <th class="text-end">Montant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="pub : ${societeEntry.value}">
+                        <td th:text="${pub.id}"></td>
+                        <td th:text="${#temporals.format(pub.date, 'dd/MM/yyyy')}"></td>
+                        <td th:text="${pub.nombre}"></td>
+                        <td th:text="${#numbers.formatDecimal(pub.societe.prixUnitairePub, 0, 'COMMA', 0, 'POINT')} + ' Ar'"></td>
+                        <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(pub.montantTotal, 0, 'COMMA', 0, 'POINT')} + ' Ar'"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script th:src="@{/bootstrap/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>
