@@ -260,4 +260,39 @@ public class Voyage {
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
+    // Calcul du montant généré par diffusion de publicités
+    public BigDecimal getMontantPublicites() {
+        if (publicites == null || publicites.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        return publicites.stream()
+                .map(Publicite::getMontantTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    // Calcul du montant payé des publicités pour ce voyage (prorata)
+    public BigDecimal getMontantPublicitesPaye() {
+        if (publicites == null || publicites.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        return publicites.stream()
+                .map(Publicite::getMontantPaye)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    // Calcul du reste à payer des publicités pour ce voyage (prorata)
+    public BigDecimal getMontantPublicitesRestant() {
+        if (publicites == null || publicites.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        return publicites.stream()
+                .map(Publicite::getResteAPayer)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    // Calcul du chiffre d'affaires total (tickets vendus + publicités)
+    public BigDecimal getChiffreAffairesTotal() {
+        return getChiffreAffairesActuel().add(getMontantPublicites());
+    }
 }

@@ -134,3 +134,35 @@ SELECT * from paiement;
 
 
 
+----j5------------
+INSERT INTO voyage (id, date_heure, id_voiture, id_trajet, dure_voyage) VALUES
+(1, '2026-01-20 10:00:00', 1, 3, 6);
+
+INSERT INTO voyage (id, date_heure, id_voiture, id_trajet, dure_voyage) VALUES
+(2, '2026-01-21 10:00:00', 1, 3, 6);
+
+INSERT INTO voyage (id, date_heure, id_voiture, id_trajet, dure_voyage) VALUES
+(3, '2026-01-21 15:00:00', 1, 3, 6);
+
+
+INSERT into societe (id,lib,prix_unitaire_pub) values
+(3,'Soccobis',100000),
+(4,'Jejoo',100000);
+
+
+
+insert into publicites(id,id_societe,nombre,date_pub,id_voyage) values
+(1,1,1,'2026-01-20',1),
+(2,2,1,'2026-01-20',1),
+(3,3,2,'2026-01-21',2),
+(4,4,1,'2026-01-21',2);
+
+insert into publicites(id,id_societe,nombre,date_pub,id_voyage) values
+(6,1,1,'2026-01-20',2);
+
+
+
+
+
+
+

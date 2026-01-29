@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Taxi Brousse - Chiffre d'Affaire par Voyage</title>
+    
+    <link th:href="@{/bootstrap/css/bootstrap.min.css}" rel="stylesheet">
+</head>
+<body>
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Chiffre d'Affaire par Voyage</h1>
+        <div>
+            <a th:href="@{/}" class="btn btn-secondary">🏠 Accueil</a>
+            <a th:href="@{/publicites}" class="btn btn-info">📢 Gestion des Publicités</a>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <!-- Filtre -->
+    <form th:action="@{/chiffre-affaire/filtrer}" method="post" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label for="date" class="form-label">Date</label>
+            <input type="date" id="date" name="date" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label for="departId" class="form-label">Gare de départ</label>
+            <select id="departId" name="departId" class="form-select">
+                <option value="">-- Toutes --</option>
+                <option th:each="gare : ${gares}" th:value="${gare.id}" th:text="${gare.nom}"></option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="arriveId" class="form-label">Gare d'arrivée</label>
+            <select id="arriveId" name="arriveId" class="form-select">
+                <option value="">-- Toutes --</option>
+                <option th:each="gare : ${gares}" th:value="${gare.id}" th:text="${gare.nom}"></option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Filtrer</button>
+        </div>
+    </form>
+    <a th:href="@{/chiffre-affaire}" class="btn btn-secondary mb-4">Réinitialiser</a>
+
+    <!-- Tableau du chiffre d'affaires par voyage -->
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+            <tr>
+                <th>Gare Routier Départ</th>
+                <th>Gare Routier Arrivée</th>
+                <th>Véhicule</th>
+                <th>Date Départ</th>
+                <th>Heure Départ</th>
+                <th>Montant généré par ticket vendu (Ar)</th>
+                <th>Montant généré par diffusion de publicité (Ar)</th>
+                <th class="table-success">Montant Pub Payé (Ar)</th>
+                <th class="table-danger">Reste Pub à Payer (Ar)</th>
+                <th class="table-info">Montant CA Total (Ar)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="voyage : ${voyages}">
+                <td th:text="${voyage.trajet.depart.nom}"></td>
+                <td th:text="${voyage.trajet.arrive.nom}"></td>
+                <td th:text="${voyage.voiture.matricule}"></td>
+                <td th:text="${#temporals.format(voyage.dateHeure, 'dd/MM/yyyy')}"></td>
+                <td th:text="${#temporals.format(voyage.dateHeure, 'HH:mm')}"></td>
+                <td class="text-end">
+                    <span th:text="${#strings.replace(#numbers.formatDecimal(voyage.chiffreAffairesActuel, 1, 'POINT', 2, 'COMMA'), ',00', '')}" class="fw-bold text-primary"></span>
+                </td>
+                <td class="text-end">
+                    <span th:text="${#strings.replace(#numbers.formatDecimal(voyage.montantPublicites, 1, 'POINT', 2, 'COMMA'), ',00', '')}" class="fw-bold text-info"></span>
+                </td>
+                <td class="text-end table-success">
+                    <span th:text="${#strings.replace(#numbers.formatDecimal(voyage.montantPublicitesPaye, 1, 'POINT', 2, 'COMMA'), ',00', '')}" class="fw-bold text-success"></span>
+                </td>
+                <td class="text-end table-danger">
+                    <span th:text="${#strings.replace(#numbers.formatDecimal(voyage.montantPublicitesRestant, 1, 'POINT', 2, 'COMMA'), ',00', '')}" class="fw-bold text-danger"></span>
+                </td>
+                <td class="text-end table-info">
+                    <span th:text="${#strings.replace(#numbers.formatDecimal(voyage.chiffreAffairesTotal, 1, 'POINT', 2, 'COMMA'), ',00', '')}" class="fw-bold text-dark"></span>
+                </td>
+            </tr>
+            </tbody>
+            <!-- Total général -->
+            <tfoot class="table-warning">
+            <tr>
+                <td colspan="5" class="text-end fw-bold">TOTAL GÉNÉRAL :</td>
+                <td class="text-end">
+                    <span th:with="totalTickets=${#aggregates.sum(voyages.![chiffreAffairesActuel])}"
+                          th:text="${#strings.replace(#numbers.formatDecimal(totalTickets, 1, 'POINT', 2, 'COMMA'), ',00', '')}" 
+                          class="fw-bold text-primary"></span>
+                </td>
+                <td class="text-end">
+                    <span th:with="totalPub=${#aggregates.sum(voyages.![montantPublicites])}"
+                          th:text="${#strings.replace(#numbers.formatDecimal(totalPub, 1, 'POINT', 2, 'COMMA'), ',00', '')}" 
+                          class="fw-bold text-info"></span>
+                </td>
+                <td class="text-end table-success">
+                    <span th:with="totalPubPaye=${#aggregates.sum(voyages.![montantPublicitesPaye])}"
+                          th:text="${#strings.replace(#numbers.formatDecimal(totalPubPaye, 1, 'POINT', 2, 'COMMA'), ',00', '')}" 
+                          class="fw-bold text-success"></span>
+                </td>
+                <td class="text-end table-danger">
+                    <span th:with="totalPubRestant=${#aggregates.sum(voyages.![montantPublicitesRestant])}"
+                          th:text="${#strings.replace(#numbers.formatDecimal(totalPubRestant, 1, 'POINT', 2, 'COMMA'), ',00', '')}" 
+                          class="fw-bold text-danger"></span>
+                </td>
+                <td class="text-end table-info">
+                    <span th:with="totalCA=${#aggregates.sum(voyages.![chiffreAffairesTotal])}"
+                          th:text="${#strings.replace(#numbers.formatDecimal(totalCA, 1, 'POINT', 2, 'COMMA'), ',00', '')}" 
+                          class="fw-bold text-dark"></span>
+                </td>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+
+</div>
+</body>
+</html>

@@ -49,4 +49,20 @@ public class Publicite {
         }
         return societe.getPrixUnitairePub().multiply(BigDecimal.valueOf(nombre));
     }
+
+    // Calcul du montant payé pour cette publicité (prorata)
+    public BigDecimal getMontantPaye() {
+        if (societe == null) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal pourcentagePaye = societe.getPourcentagePaye();
+        return getMontantTotal()
+                .multiply(pourcentagePaye)
+                .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+    }
+
+    // Calcul du reste à payer pour cette publicité (prorata)
+    public BigDecimal getResteAPayer() {
+        return getMontantTotal().subtract(getMontantPaye());
+    }
 }

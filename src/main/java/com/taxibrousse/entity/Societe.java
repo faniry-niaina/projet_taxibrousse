@@ -49,4 +49,30 @@ public class Societe {
                 .map(Publicite::getMontantTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
+    // Calcul du total des paiements effectués
+    public BigDecimal getTotalPaiements() {
+        if (paiements == null || paiements.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        return paiements.stream()
+                .map(Paiement::getMontantPaye)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    // Calcul du reste à payer global
+    public BigDecimal getResteAPayer() {
+        return getMontantTotalPublicites().subtract(getTotalPaiements());
+    }
+
+    // Calcul du pourcentage payé (prorata)
+    public BigDecimal getPourcentagePaye() {
+        BigDecimal total = getMontantTotalPublicites();
+        if (total.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
+        }
+        return getTotalPaiements()
+                .multiply(BigDecimal.valueOf(100))
+                .divide(total, 4, java.math.RoundingMode.HALF_UP);
+    }
 }

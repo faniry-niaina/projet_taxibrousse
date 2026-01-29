@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -26,7 +28,9 @@ public class VoyageService {
         List<Voyage> voyages;
         
         if (date != null) {
-            voyages = voyageRepository.findByDateHeure(date);
+            LocalDateTime startOfDay = date.atStartOfDay();
+            LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
+            voyages = voyageRepository.findByDateHeureBetween(startOfDay, endOfDay);
         } else {
             voyages = voyageRepository.findAll();
         }
