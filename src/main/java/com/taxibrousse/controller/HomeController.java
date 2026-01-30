@@ -1,15 +1,18 @@
 package com.taxibrousse.controller;
 
-import com.taxibrousse.entity.Voyage;
-import com.taxibrousse.service.GareService;
-import com.taxibrousse.service.VoyageService;
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import java.time.LocalDate;
-import java.util.List;
+import com.taxibrousse.entity.Voyage;
+import com.taxibrousse.service.GareService;
+import com.taxibrousse.service.VoyageService;
 
 @Controller
 public class HomeController {
@@ -28,9 +31,27 @@ public class HomeController {
     }
 
     @GetMapping("/chiffre-affaire")
-    public String chiffreAffaire(Model model) {
-        model.addAttribute("voyages", voyageService.getAllVoyages());
+    public String chiffreAffaire(
+            @RequestParam(required = false) Integer mois,
+            @RequestParam(required = false) Integer annee,
+            @RequestParam(required = false) Integer departId,
+            @RequestParam(required = false) Integer arriveId,
+            Model model) {
+        
+        List<Voyage> voyages;
+        if (mois != null || annee != null || departId != null || arriveId != null) {
+            voyages = voyageService.filterVoyagesByMoisAnnee(mois, annee, departId, arriveId);
+        } else {
+            voyages = voyageService.getAllVoyages();
+        }
+        
+        model.addAttribute("voyages", voyages);
         model.addAttribute("gares", gareService.getAllGares());
+        model.addAttribute("annees", voyageService.getAllAnnees());
+        model.addAttribute("moisSelectionne", mois);
+        model.addAttribute("anneeSelectionnee", annee);
+        model.addAttribute("departIdSelectionne", departId);
+        model.addAttribute("arriveIdSelectionne", arriveId);
         return "chiffreAffaire";
     }
 
@@ -43,6 +64,7 @@ public class HomeController {
         List<Voyage> voyages = voyageService.filterVoyages(localDate, departId, arriveId);
         model.addAttribute("voyages", voyages);
         model.addAttribute("gares", gareService.getAllGares());
+        model.addAttribute("annees", voyageService.getAllAnnees());
         return "chiffreAffaire";
     }
 

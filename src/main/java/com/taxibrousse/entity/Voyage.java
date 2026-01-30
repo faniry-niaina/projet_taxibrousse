@@ -36,6 +36,9 @@ public class Voyage {
     @OneToMany(mappedBy = "voyage")
     private List<Publicite> publicites;
 
+    @OneToMany(mappedBy = "voyage")
+    private List<VenteProduit> venteProduits;
+
     // Getters et Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -57,6 +60,9 @@ public class Voyage {
 
     public List<Publicite> getPublicites() { return publicites; }
     public void setPublicites(List<Publicite> publicites) { this.publicites = publicites; }
+
+    public List<VenteProduit> getVenteProduits() { return venteProduits; }
+    public void setVenteProduits(List<VenteProduit> venteProduits) { this.venteProduits = venteProduits; }
 
     // Calcul des places restantes totales
     public int getPlacesRestantes() {
@@ -291,8 +297,23 @@ public class Voyage {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    // Calcul du chiffre d'affaires total (tickets vendus + publicités)
+    // Calcul du montant total des ventes de produits extra pour ce voyage
+    public BigDecimal getMontantVentes() {
+        if (venteProduits == null || venteProduits.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        return venteProduits.stream()
+                .map(vp -> {
+                    BigDecimal prix = vp.getProduit() != null && vp.getProduit().getPrix() != null 
+                            ? vp.getProduit().getPrix() : BigDecimal.ZERO;
+                    int nombre = vp.getNombre() != null ? vp.getNombre() : 0;
+                    return prix.multiply(BigDecimal.valueOf(nombre));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    // Calcul du chiffre d'affaires total (tickets vendus + publicités + ventes)
     public BigDecimal getChiffreAffairesTotal() {
-        return getChiffreAffairesActuel().add(getMontantPublicites());
+        return getChiffreAffairesActuel().add(getMontantPublicites()).add(getMontantVentes());
     }
 }

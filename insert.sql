@@ -161,6 +161,14 @@ insert into publicites(id,id_societe,nombre,date_pub,id_voyage) values
 (6,1,1,'2026-01-20',2);
 
 
+insert into produit_extra(id,lib,prix) values(1,'Eau',5000);
+
+insert into vente_produit(id,id_voyage,id_produit,nombre,date_vente) values
+(1,1,1,100,'2026-01-20'),
+(2,2,1,100,'2026-01-21'),
+(3,3,1,100,'2026-01-21');
+
+
 
 
 
